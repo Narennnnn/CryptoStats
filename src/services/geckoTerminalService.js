@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
 
 class GeckoTerminalService {
     constructor() {
@@ -7,8 +8,7 @@ class GeckoTerminalService {
         }
         
         this.baseURL = process.env.GECKOTERMINAL_BASE_URL;
-        console.log('GeckoTerminal Base URL:', this.baseURL);
-        
+        // console.log('GeckoTerminal Base URL:', this.baseURL);
         this.tokenMapping = {
             'ethereum': {
                 network: 'eth',
@@ -31,9 +31,9 @@ class GeckoTerminalService {
             if (!tokenInfo) {
                 throw new Error(`Unsupported coin: ${coinId}`);
             }
-
-            const url = `${this.baseURL}/networks/${tokenInfo.network}/tokens/${tokenInfo.address}/pools`;
-            console.log('Requesting URL:', url);
+            // endpoint to get the token data
+            const url = `${this.baseURL}/networks/${tokenInfo.network}/tokens/${tokenInfo.address}`;
+            // console.log('Requesting URL:', url);
 
             const response = await axios.get(url, {
                 headers: {
@@ -41,16 +41,18 @@ class GeckoTerminalService {
                 }
             });
             
-            if (!response.data || !response.data.data || !response.data.data[0]) {
+            if (!response.data || !response.data.data || !response.data.data.attributes) {
                 throw new Error('Invalid response format from GeckoTerminal');
             }
 
-            const poolData = response.data.data[0].attributes;
+            const tokenData = response.data.data.attributes;
             
             return {
-                priceUSD: parseFloat(poolData.base_token_price_usd || 0),
-                marketCapUSD: parseFloat(poolData.base_token_price_usd * poolData.base_token_total_supply || 0),
-                change24h: parseFloat(poolData.price_change_24h || 0)
+                id: uuidv4(),
+                coinId: coinId,
+                priceUSD: parseFloat(tokenData.price_usd || 0),
+                marketCapUSD: parseFloat(tokenData.market_cap_usd || 0),
+                change24h: parseFloat(tokenData.volume_usd?.h24 || 0)
             };
         } catch (error) {
             console.error(`Error fetching data for ${coinId}:`, error.message);

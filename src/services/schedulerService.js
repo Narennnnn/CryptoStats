@@ -27,9 +27,8 @@ class SchedulerService {
 
     startScheduler() {
         // Run every 2 hours using cron expression
-        // run every 10 seconds
-        cron.schedule('*/5 * * * * *', async () => {
-            console.log('Running crypto data fetch job...');
+        cron.schedule('0 */2 * * *', async () => {
+            // console.log('Running crypto data fetch job...');
             await this.fetchAndStoreCryptoData();
         });
 
